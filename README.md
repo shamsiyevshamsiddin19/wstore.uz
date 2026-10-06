@@ -1,96 +1,114 @@
-# wstore.uz
+# 🛒 wstore.uz — Raqamli Mahsulotlar Marketi (Django Platformasi)
 
-Raqamli mahsulotlar marketi — tayyor kod loyihalari, botlar, saytlar, ilovalar va kod bloklarini sotish platformasi.
+**wstore.uz** — dasturchilar, frilanserlar va mualliflar uchun tayyor kod loyihalari, Telegram botlar, veb-saytlar, mobil ilovalar va skriptlarni sotish hamda sotib olish uchun mo'ljallangan raqamli bozor platformasi.
 
-## Texnologiyalar
+---
 
-- **Next.js 15** (App Router) + React 19 + TypeScript
-- **TailwindCSS** — dark tema (marketpleys uslubi)
-- **Prisma ORM** + **PostgreSQL**
-- **Auth.js (NextAuth v5)** — Google OAuth, avtomatik ro'yxatdan o'tish
+## 🚀 Texnologiyalar to'plami
 
-## Ishga tushirish
+- **Backend:** Python 3.12, Django 5.x
+- **Ma'lumotlar bazasi:** PostgreSQL (ishlab chiqarish) / SQLite (lokal test)
+- **Frontend & Stil:** HTML5, Modern CSS3 (Dark Theme dizayn), Vanilla JavaScript
+- **To'lov integratsiyasi:** Click Merchant API & to'lov ko'prigi
+- **Autentifikatsiya:** Google OAuth 2.0 (yagona xavfsiz kirish)
+- **Ko'p tillilik (i18n):** O'zbekcha (asosiy), Ruscha, Inglizcha
 
+---
+
+## ✨ Imkoniyatlar va Funksiyalar
+
+1. **Katalog & Qidiruv:**
+   - Kategoriya va texnologiyalar (Python, Django, Flutter, PHP, JS va h.k.) bo'yicha saralash
+   - Narx oralig'i, reyting va saralash (eng yangi, arzon, qimmat)
+   - Jonli qidiruv tizimi
+
+2. **Google OAuth orqali kirish:**
+   - Parolsiz, xavfsiz va bir bosqichli Google autentifikatsiyasi
+   - Yangi foydalanuvchilar uchun avtomatik profil yaratish
+
+3. **Sotuvchi va Xaridor Paneli:**
+   - Yangi mahsulot yuklash (fayllar, skrinshotlar, narx, tavsif)
+   - Buyurtmalar tarixi va to'lov holati
+   - Sotuvchi balansi va mablag'ni yechib olish so'rovlari
+
+4. **To'lov Tizimi (Click API):**
+   - Click tizimi orqali to'lov havolasini generatsiya qilish
+   - To'lov tasdiqlangach faylni xavfsiz yuklab olish imkoniyati
+
+5. **Lokalizatsiya (Ko'p tilli):**
+   - Sayt interfeysini o'zbek, rus va ingliz tillarida to'liq qo'llab-quvvatlash (`locale/`)
+
+---
+
+## 🛠️ O'rnatish va Ishga Tushirish
+
+### 1. Repozitoriyani klonlash
 ```bash
-# 1. Paketlarni o'rnatish
-npm install
+git clone https://github.com/shamsiyevshamsiddin19/wstore.uz.git
+cd wstore.uz
+```
 
-# 2. Muhit sozlamalari
+### 2. Virtual muhit yaratish va faollashtirish
+```bash
+python3 -m venv venv
+source venv/bin/activate  # Linux / macOS
+# yoki Windows: venv\Scripts\activate
+```
+
+### 3. Bog'liqliklarni o'rnatish
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Muhit sozlamalarini sozlash (.env)
+```bash
 cp .env.example .env
-#   - DATABASE_URL      (PostgreSQL connection string)
-#   - AUTH_SECRET       (npx auth secret)
-#   - AUTH_GOOGLE_ID / AUTH_GOOGLE_SECRET  (Google Cloud Console)
+```
+`.env` faylida quyidagi sozlamalarni o'zingizga moslang:
+- `SECRET_KEY`
+- `DEBUG=True` (lokal muhitda)
+- `DATABASE_URL` (bo'sh qoldirilsa SQLite ishlatiladi)
+- `GOOGLE_OAUTH_CLIENT_ID` va `GOOGLE_OAUTH_CLIENT_SECRET` (Google OAuth uchun)
+- `CLICK_SERVICE_ID`, `CLICK_MERCHANT_ID` (to'lovlar uchun)
 
-# 3. Prisma client generatsiyasi
-npm run db:generate
-
-# 4. (Baza tayyor bo'lsa) sxemani yuklash + seed
-npm run db:push
-npm run db:seed
-
-# 5. Dev server
-npm run dev
+### 5. Ma'lumotlar bazasi migratsiyalari
+```bash
+python manage.py migrate
 ```
 
-> Katalog sahifasi namunaviy ma'lumot (`src/lib/mock-data.ts`) bilan ishlaydi —
-> ya'ni bazasiz ham `npm run dev` ochiladi. Auth va real mahsulotlar uchun
-> PostgreSQL + Google kalitlari kerak.
-
-## Google OAuth sozlash
-
-1. https://console.cloud.google.com → **APIs & Services → Credentials**
-2. **Create OAuth client ID** → Application type: **Web application**
-3. Authorized redirect URI:
-   `http://localhost:3000/api/auth/callback/google`
-4. Client ID / Secret ni `.env` ga qo'ying.
-
-Birinchi kirishdayoq foydalanuvchi **avtomatik** yaratiladi (PrismaAdapter).
-
-## Struktura
-
-```
-src/
-├─ app/
-│  ├─ page.tsx                 # Katalog (filter + grid)
-│  ├─ login/                   # Google bilan kirish
-│  ├─ product/[slug]/          # Mahsulot sahifasi
-│  ├─ dashboard/               # Xaridor kabineti
-│  ├─ seller/                  # Sotuvchi paneli
-│  └─ api/auth/[...nextauth]/  # Auth.js
-├─ components/                 # Navbar, Catalog, FilterSidebar, ProductCard
-└─ lib/                        # prisma, auth, mock-data, types
-prisma/schema.prisma          # DB modellari
+### 6. Namunaviy ma'lumotlarni yuklash (ixtiyoriy)
+```bash
+python manage.py seed_data
 ```
 
-## Bajarilgan funksiyalar
+### 7. Loyihani ishga tushirish
+```bash
+python manage.py runserver
+```
+Brauzerda: `http://127.0.0.1:8000` manziliga kiring.
 
-- [x] Katalog: dark UI, filter (narx/kategoriya/texnologiya), saralash
-- [x] Google OAuth + avtomatik ro'yxatdan o'tish (Auth.js)
-- [x] Iconlar: `lucide-react` (emoji o'rniga)
-- [x] Katalog bazadan (`getProducts`, mock fallback bilan)
-- [x] To'lov: Payme / Click / Uzum havola generatsiyasi + webhook'lar
-      (`/api/checkout`, `/api/payment/payme`, `/api/payment/click`)
-- [x] Cloudflare R2 — kod .zip saqlash + xavfsiz yuklab olish (`/api/download/[token]`)
-- [x] Sotuvchi paneli: mahsulot qo'shish formasi + statistika + moderatsiya (PENDING)
+---
 
-## To'lov oqimi
+## 📂 Loyiha Strukturasi
 
-1. Xaridor mahsulot sahifasida provayder (Payme/Click/Uzum) tanlab "Sotib olish" bosadi
-2. `/api/checkout` — `Order` (PENDING) yaratadi, to'lov havolasini qaytaradi
-3. Xaridor to'lovni amalga oshiradi → provayder **webhook** yuboradi
-4. Webhook `Order.status = PAID` qiladi va `downloadToken` faollashadi
-5. Kabinetda yuklab olish tugmasi → `/api/download/<token>` → R2 dan 10 daqiqalik havola
+```
+wstore.uz/
+├── apps/
+│   ├── core/         # Asosiy modellar, Google OAuth, yordamchi filtrlar
+│   ├── orders/       # Buyurtmalar, to'lovlar, sotuvchi balansi
+│   └── store/        # Mahsulotlar katalogi, sharhlar, wishlist
+├── config/           # Django settings, asgi, wsgi, urls
+├── locale/           # uz, ru, en tarjima fayllari
+├── media/            # Mahsulot skrinshotlari va muqovalari
+├── static/           # CSS, JS, rasmlar va logotiplar
+├── templates/        # HTML andozalari (base, navbar, footer, catalog)
+├── .env.example      # Namunaviy konfiguratsiya
+├── manage.py         # Django boshqaruv skripti
+└── requirements.txt  # Python paketlari
+```
 
-> ⚠️ Webhook'larda **signature tekshiruvi** (Payme: `PAYME_KEY`, Click: MD5 `sign_string`)
-> ishlab chiqarishdan oldin to'ldirilishi shart — kod ichida `TODO` bilan belgilangan.
+---
 
-## Deploy (Vercel + Neon)
+## 👨‍💻 Muallif
 
-1. **Baza** — [neon.tech](https://neon.tech) yoki [railway.app](https://railway.app) da PostgreSQL yarating, `DATABASE_URL` ni oling.
-2. **Repo** — GitHub'ga yuklang.
-3. **Vercel** — [vercel.com](https://vercel.com) da import qiling, Environment Variables ga `.env` dagi barcha kalitlarni qo'ying (`APP_URL` ni real domenga sozlang).
-4. **Google OAuth** — redirect URI ga qo'shing: `https://wstore.uz/api/auth/callback/google`
-5. **Webhook URL'lari** — Payme/Click kabinetida:
-   - Payme: `https://wstore.uz/api/payment/payme`
-   - Click: `https://wstore.uz/api/payment/click`
-6. Deploy'dan so'ng migratsiya: `npx prisma migrate deploy` va `npm run db:seed`.
+- **Shamsiddin Shamsiyev** — [GitHub Profili](https://github.com/shamsiyevshamsiddin19)

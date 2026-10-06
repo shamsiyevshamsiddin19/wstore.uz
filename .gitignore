@@ -1,20 +1,24 @@
-/node_modules
-/.next
-/out
-/build
+# Muhit va sirlar
 .env
-.env*.local
-*.log
-.DS_Store
-next-env.d.ts
-/prisma/migrations/dev.db*
-/uploads
-*.tar.gz
+*.env.local
 
-# Python & Backend
+# Python
 venv/
-.venv/
 __pycache__/
 *.py[cod]
-*.sqlite3
-*.db
+
+# Django
+db.sqlite3
+db.sqlite3-journal
+staticfiles/
+*.log
+
+# Foydalanuvchi yuklagan fayllar (serverda qoladi)
+media/covers/
+media/screenshots/
+media/products/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store

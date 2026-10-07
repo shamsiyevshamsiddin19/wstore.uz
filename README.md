@@ -1,6 +1,6 @@
-# 🛒 wstore.uz — Raqamli Mahsulotlar Marketi (Django Platformasi)
+# 🛒 wstore.uz — Django Backend & Platform
 
-**wstore.uz** — dasturchilar, frilanserlar va mualliflar uchun tayyor kod loyihalari, Telegram botlar, veb-saytlar, mobil ilovalar va skriptlarni sotish hamda sotib olish uchun mo'ljallangan raqamli bozor platformasi.
+**wstore.uz** — raqamli mahsulotlar (tayyor kod loyihalari, botlar, veb-saytlar, mobil ilovalar va skriptlar) marketining Django 5 versiyasi.
 
 ---
 
@@ -40,59 +40,35 @@
 
 ---
 
-## 🛠️ O'rnatish va Ishga Tushirish
+## 🛠️ Ishga tushirish
 
-### 1. Repozitoriyani klonlash
 ```bash
-git clone https://github.com/shamsiyevshamsiddin19/wstore.uz.git
-cd wstore.uz
-```
-
-### 2. Virtual muhit yaratish va faollashtirish
-```bash
+# 1. Virtual muhit yaratish
 python3 -m venv venv
-source venv/bin/activate  # Linux / macOS
-# yoki Windows: venv\Scripts\activate
-```
+source venv/bin/activate
 
-### 3. Bog'liqliklarni o'rnatish
-```bash
+# 2. Bog'liqliklarni o'rnatish
 pip install -r requirements.txt
-```
 
-### 4. Muhit sozlamalarini sozlash (.env)
-```bash
+# 3. Muhit fayli (.env)
 cp .env.example .env
-```
-`.env` faylida quyidagi sozlamalarni o'zingizga moslang:
-- `SECRET_KEY`
-- `DEBUG=True` (lokal muhitda)
-- `DATABASE_URL` (bo'sh qoldirilsa SQLite ishlatiladi)
-- `GOOGLE_OAUTH_CLIENT_ID` va `GOOGLE_OAUTH_CLIENT_SECRET` (Google OAuth uchun)
-- `CLICK_SERVICE_ID`, `CLICK_MERCHANT_ID` (to'lovlar uchun)
 
-### 5. Ma'lumotlar bazasi migratsiyalari
-```bash
+# 4. Migratsiyalar
 python manage.py migrate
-```
 
-### 6. Namunaviy ma'lumotlarni yuklash (ixtiyoriy)
-```bash
+# 5. Namunaviy ma'lumotlar (ixtiyoriy)
 python manage.py seed_data
-```
 
-### 7. Loyihani ishga tushirish
-```bash
+# 6. Serverni yurgizish
 python manage.py runserver
 ```
-Brauzerda: `http://127.0.0.1:8000` manziliga kiring.
 
 ---
 
-## 📂 Loyiha Strukturasi
+## 📂 Struktura
 
 ```
-wstore.uz/
+django/
 ├── apps/
 │   ├── core/         # Asosiy modellar, Google OAuth, yordamchi filtrlar
 │   ├── orders/       # Buyurtmalar, to'lovlar, sotuvchi balansi
@@ -101,14 +77,8 @@ wstore.uz/
 ├── locale/           # uz, ru, en tarjima fayllari
 ├── media/            # Mahsulot skrinshotlari va muqovalari
 ├── static/           # CSS, JS, rasmlar va logotiplar
-├── templates/        # HTML andozalari (base, navbar, footer, catalog)
+├── templates/        # HTML andozalari
 ├── .env.example      # Namunaviy konfiguratsiya
 ├── manage.py         # Django boshqaruv skripti
 └── requirements.txt  # Python paketlari
 ```
-
----
-
-## 👨‍💻 Muallif
-
-- **Shamsiddin Shamsiyev** — [GitHub Profili](https://github.com/shamsiyevshamsiddin19)

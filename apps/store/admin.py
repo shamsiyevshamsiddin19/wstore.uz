@@ -21,7 +21,7 @@ class ProductAdmin(admin.ModelAdmin):
     actions = ["make_active", "make_rejected", "make_paused"]
 
     def price_display(self, obj):
-        return f"${obj.price} ({obj.price_som:,} so'm)".replace(",", " ")
+        return f"{obj.price} USD ({obj.price_som:,} so'm)".replace(",", " ")
     price_display.short_description = "Narx"
 
     @admin.action(description="Tanlangan mahsulotlarni tasdiqlash (ACTIVE)")

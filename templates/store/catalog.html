@@ -50,13 +50,13 @@
             <h2 class="text-sm font-semibold uppercase tracking-wide text-fg">
               {% translate "Filtr" %}
             </h2>
-            {% if category_slug or subcat or selected_tech or price_min or price_max or q %}
-              <span class="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-xs font-medium text-white">
-                !
+            {% if active_filters_count %}
+              <span class="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-xs font-semibold text-white">
+                {{ active_filters_count }}
               </span>
             {% endif %}
           </div>
-          {% if category_slug or subcat or selected_tech or price_min or price_max or q %}
+          {% if has_filters %}
             <a
               href="{% url 'store:catalog' %}"
               class="flex items-center gap-1 rounded-md px-1.5 py-1 text-xs text-muted transition hover:bg-surface-2 hover:text-fg"
@@ -90,19 +90,23 @@
                 <div class="sidebar-sec-title">{% translate "Saralash" %}</div>
                 <div class="flex flex-col gap-1.5">
                   <label class="filter-radio-item">
-                    <input type="radio" name="sort" value="popular" onchange="this.form.submit()" {% if sort == 'popular' %}checked{% endif %}>
+                    <input type="radio" name="sort" value="popular" class="sr-only" onchange="this.form.submit()" {% if sort == 'popular' %}checked{% endif %}>
+                    <span class="custom-radio-box"><span class="custom-radio-dot"></span></span>
                     <span>{% translate "Eng ommabop" %}</span>
                   </label>
                   <label class="filter-radio-item">
-                    <input type="radio" name="sort" value="price_asc" onchange="this.form.submit()" {% if sort == 'price_asc' %}checked{% endif %}>
+                    <input type="radio" name="sort" value="price_asc" class="sr-only" onchange="this.form.submit()" {% if sort == 'price_asc' %}checked{% endif %}>
+                    <span class="custom-radio-box"><span class="custom-radio-dot"></span></span>
                     <span>{% translate "Arzonroq" %}</span>
                   </label>
                   <label class="filter-radio-item">
-                    <input type="radio" name="sort" value="price_desc" onchange="this.form.submit()" {% if sort == 'price_desc' %}checked{% endif %}>
+                    <input type="radio" name="sort" value="price_desc" class="sr-only" onchange="this.form.submit()" {% if sort == 'price_desc' %}checked{% endif %}>
+                    <span class="custom-radio-box"><span class="custom-radio-dot"></span></span>
                     <span>{% translate "Qimmatroq" %}</span>
                   </label>
                   <label class="filter-radio-item">
-                    <input type="radio" name="sort" value="rating" onchange="this.form.submit()" {% if sort == 'rating' %}checked{% endif %}>
+                    <input type="radio" name="sort" value="rating" class="sr-only" onchange="this.form.submit()" {% if sort == 'rating' %}checked{% endif %}>
+                    <span class="custom-radio-box"><span class="custom-radio-dot"></span></span>
                     <span>{% translate "Yuqori reyting" %}</span>
                   </label>
                 </div>
@@ -118,10 +122,14 @@
                         type="checkbox" 
                         name="category" 
                         value="{{ cat.slug }}" 
-                        onchange="onCategorySelect(this, '{{ cat.slug }}')"
-                        {% if category_slug == cat.slug %}checked{% endif %}
+                        class="sr-only"
+                        onchange="this.form.submit()"
+                        {% if cat.slug in selected_cats %}checked{% endif %}
                       >
-                      <span class="flex items-center gap-2">
+                      <span class="custom-check-box">
+                        <svg class="check-icon" width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </span>
+                      <span class="flex items-center gap-2 truncate">
                         {% if cat.icon == 'bot' %}<i data-lucide="bot" style="width: 15px; height: 15px;" class="text-accent"></i>
                         {% elif cat.icon == 'globe' %}<i data-lucide="globe" style="width: 15px; height: 15px;" class="text-accent"></i>
                         {% elif cat.icon == 'smartphone' %}<i data-lucide="smartphone" style="width: 15px; height: 15px;" class="text-accent"></i>
@@ -141,15 +149,19 @@
                 <div class="sidebar-sec-title">{% translate "Narx oralig'i" %}</div>
                 <div class="flex flex-col gap-1.5">
                   {% for pr in price_ranges %}
-                    <label class="filter-checkbox-item">
+                    <label class="filter-radio-item">
                       <input 
                         type="radio" 
                         name="price_range" 
                         value="{{ pr.min }}-{{ pr.max }}" 
+                        class="sr-only"
                         onchange="setPriceRange(this, '{{ pr.min }}', '{{ pr.max }}')"
                         {% if price_min == pr.min|stringformat:'s' and price_max == pr.max|stringformat:'s' %}checked{% endif %}
                       >
-                      <span>{{ pr.label }}</span>
+                      <span class="custom-radio-box">
+                        <span class="custom-radio-dot"></span>
+                      </span>
+                      <span class="price-range-label" data-min="{{ pr.min }}" data-max="{{ pr.max }}">{{ pr.label }}</span>
                     </label>
                   {% endfor %}
                   <input type="hidden" name="min_price" id="minPriceInput" value="{{ price_min|default:'' }}">
@@ -385,14 +397,6 @@
     form.querySelector('[name="min_price"]').value = min;
     form.querySelector('[name="max_price"]').value = max;
     form.submit();
-  }
-
-  function onCategorySelect(input, slug) {
-    if (input.checked) {
-      window.location.href = "{% url 'store:catalog' %}?category=" + encodeURIComponent(slug);
-    } else {
-      window.location.href = "{% url 'store:catalog' %}";
-    }
   }
 </script>
 {% endblock %}

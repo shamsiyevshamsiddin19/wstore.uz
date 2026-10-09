@@ -22,9 +22,8 @@ def global_settings(request):
 
     return {
         "DEMO_MODE": getattr(settings, "DEMO_MODE", False),
-        # Kalitlar sozlanmagan bo'lsa "Google bilan kirish" tugmasi
-        # ko'rsatilmaydi — bosilganda baribir xato chiqardi.
-        "GOOGLE_AUTH_ENABLED": getattr(settings, "GOOGLE_AUTH_ENABLED", False),
+        "GOOGLE_AUTH_ENABLED": getattr(settings, "GOOGLE_AUTH_ENABLED", False) or settings.DEBUG or getattr(settings, "DEMO_MODE", False),
+        "GOOGLE_REAL_AUTH_ENABLED": getattr(settings, "GOOGLE_AUTH_ENABLED", False),
         "STATIC_VERSION": static_version,
         "UZS_RATE": getattr(settings, "PRODUCT_UZS_RATE", 12600),
         "MIN_WITHDRAWAL_SOM": getattr(settings, "MIN_WITHDRAWAL_SOM", 50000),

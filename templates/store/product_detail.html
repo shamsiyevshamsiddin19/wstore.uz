@@ -274,37 +274,54 @@
       <!-- Izoh qoldirish formasi -->
       <div class="mb-5 rounded-2xl border border-border bg-surface p-4 sm:p-5">
         {% if user.is_authenticated %}
-          {% if has_purchased %}
-            <form method="POST" action="{% url 'store:add_review' slug=product.slug %}">
-              {% csrf_token %}
-              <div class="mb-3">
-                <label class="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">
-                  {% translate "Bahoyingiz" %}
-                </label>
-                {{ review_form.rating }}
-              </div>
-              <div class="mb-3">
-                <label class="mb-1 block text-xs font-semibold uppercase tracking-wider text-muted">
-                  {% translate "Mahsulot haqida fikringiz" %}
-                </label>
-                {{ review_form.comment }}
-              </div>
-              <button
-                type="submit"
-                class="rounded-lg bg-accent px-4 py-2 text-xs font-semibold text-white transition hover:bg-accent-hover"
-              >
-                {% translate "Yuborish" %}
-              </button>
-            </form>
-          {% else %}
-            <div class="text-center py-2 text-sm text-muted">
-              <i data-lucide="shield-alert" style="width: 16px; height: 16px; display: inline-block; vertical-align: middle; color: var(--gold);" class="mr-1"></i>
-              {% translate "Faqat ushbu loyihani xarid qilgan tasdiqlangan xaridorlar sharh qoldirishi mumkin." %}
+          <form method="POST" action="{% url 'store:add_review' slug=product.slug %}" id="productReviewForm">
+            {% csrf_token %}
+            <div class="mb-2 text-sm text-muted">{% translate "Bahoyingiz" %}</div>
+            <div class="mb-3 flex items-center gap-1" id="starPickerContainer">
+              <input type="hidden" name="rating" id="reviewRatingInput" value="{{ user_review.rating|default:5 }}">
+              {% for i in "12345" %}
+                <button
+                  type="button"
+                  class="star-picker-btn"
+                  data-star="{{ forloop.counter }}"
+                  aria-label="{{ forloop.counter }}"
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="{% if user_review %}{% if forloop.counter <= user_review.rating %}rgb(var(--gold)){% else %}none{% endif %}{% else %}rgb(var(--gold)){% endif %}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="star-svg {% if user_review %}{% if forloop.counter <= user_review.rating %}text-gold{% else %}text-border-strong{% endif %}{% else %}text-gold{% endif %}">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                </button>
+              {% endfor %}
             </div>
-          {% endif %}
+            <div>
+              <textarea
+                name="comment"
+                rows="3"
+                placeholder="{% translate "Fikringizni yozing..." %}"
+                class="w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-sm text-fg outline-none placeholder:text-muted/60 focus:border-accent"
+                required
+              >{{ user_review.comment|default:'' }}</textarea>
+            </div>
+            <button
+              type="submit"
+              class="mt-3 flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-white transition hover:bg-accent-hover"
+            >
+              {% if user_review %}
+                {% translate "Sharhni yangilash" %}
+              {% else %}
+                {% translate "Yuborish" %}
+              {% endif %}
+            </button>
+          </form>
         {% else %}
-          <div class="text-center py-2 text-sm text-muted">
-            {% url 'core:login' as login_url %}{% blocktranslate with href=login_url nxt=request.path %}Izoh qoldirish uchun <a href="{{ href }}?next={{ nxt }}" class="font-semibold text-accent hover:underline">tizimga kiring</a>.{% endblocktranslate %}
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-3 py-2">
+            <span class="text-sm text-muted">{% translate "Ushbu mahsulot haqida fikringizni bildiring" %}</span>
+            <a
+              href="{% url 'core:login' %}?next={{ request.path }}"
+              class="flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-white transition hover:bg-accent-hover"
+            >
+              <i data-lucide="log-in" style="width: 15px; height: 15px;"></i>
+              <span>{% translate "Izoh qoldirish uchun kiring" %}</span>
+            </a>
           </div>
         {% endif %}
       </div>
@@ -315,28 +332,38 @@
           {% for r in reviews %}
             <div class="py-4 first:pt-0 last:pb-0">
               <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <div class="flex h-7 w-7 items-center justify-center rounded-full bg-surface-2 text-xs font-semibold text-muted">
+                <div class="flex items-center gap-2.5">
+                  <div class="flex h-8 w-8 items-center justify-center rounded-full bg-surface-2 text-xs font-semibold text-muted">
                     {{ r.user.initials }}
                   </div>
-                  <span class="text-sm font-medium text-fg">{{ r.user.display_name }}</span>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm font-medium text-fg">{{ r.user.display_name }}</span>
+                      {% if r.is_verified_buyer %}
+                        <span class="inline-flex items-center gap-1 rounded-full bg-green-500/10 px-2 py-0.5 text-[10px] font-medium text-green-400 border border-green-500/20">
+                          <i data-lucide="shield-check" style="width: 11px; height: 11px;"></i>
+                          {% translate "Tasdiqlangan xarid" %}
+                        </span>
+                      {% endif %}
+                    </div>
+                    <div class="flex items-center gap-0.5 mt-0.5">
+                      {% for i in "12345" %}
+                        {% if forloop.counter <= r.rating %}
+                          <i data-lucide="star" class="star-filled" style="width: 12px; height: 12px;"></i>
+                        {% else %}
+                          <i data-lucide="star" class="star-empty" style="width: 12px; height: 12px;"></i>
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  </div>
                 </div>
-                <div class="flex items-center gap-1">
-                  {% for i in "12345" %}
-                    {% if forloop.counter <= r.rating %}
-                      <i data-lucide="star" class="star-filled" style="width: 12px; height: 12px;"></i>
-                    {% else %}
-                      <i data-lucide="star" class="star-empty" style="width: 12px; height: 12px;"></i>
-                    {% endif %}
-                  {% endfor %}
+                <div class="text-[11px] text-muted">
+                  {{ r.created_at|date:"d.m.Y, H:i" }}
                 </div>
               </div>
-              <p class="mt-2 text-sm leading-relaxed text-fg/90 pl-9">
+              <p class="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-fg/90 pl-10">
                 {{ r.comment }}
               </p>
-              <div class="mt-1 pl-9 text-[11px] text-muted">
-                {{ r.created_at|date:"d.m.Y, H:i" }}
-              </div>
             </div>
           {% endfor %}
         </div>
@@ -449,5 +476,47 @@
     btn.classList.add('active', 'border-accent');
     btn.classList.remove('border-transparent', 'opacity-70');
   }
+
+  // Interactive 5-star rating picker
+  (function () {
+    const starContainer = document.getElementById('starPickerContainer');
+    const ratingInput = document.getElementById('reviewRatingInput');
+    if (!starContainer || !ratingInput) return;
+
+    const buttons = starContainer.querySelectorAll('.star-picker-btn');
+    let currentRating = parseInt(ratingInput.value, 10) || 5;
+
+    function renderStars(rating) {
+      buttons.forEach((btn, idx) => {
+        const starNum = idx + 1;
+        const svg = btn.querySelector('.star-svg');
+        if (svg) {
+          if (starNum <= rating) {
+            svg.setAttribute('fill', 'rgb(var(--gold))');
+            svg.classList.add('text-gold');
+            svg.classList.remove('text-border-strong');
+          } else {
+            svg.setAttribute('fill', 'none');
+            svg.classList.remove('text-gold');
+            svg.classList.add('text-border-strong');
+          }
+        }
+      });
+    }
+
+    buttons.forEach((btn) => {
+      const starNum = parseInt(btn.dataset.star, 10);
+      btn.addEventListener('mouseenter', () => renderStars(starNum));
+      btn.addEventListener('click', () => {
+        currentRating = starNum;
+        ratingInput.value = starNum;
+        renderStars(currentRating);
+      });
+    });
+
+    starContainer.addEventListener('mouseleave', () => {
+      renderStars(currentRating);
+    });
+  })();
 </script>
 {% endblock %}

@@ -110,7 +110,7 @@
                 {{ order.product.title }}
               </a>
               <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.82rem; color: var(--muted);">
-                <span style="color: var(--accent); font-weight: 600;">${{ order.product.price|floatformat:0 }}</span>
+                <span style="color: var(--accent); font-weight: 600;" data-usd="{{ order.product.price }}">{{ order.product.price|floatformat:0 }} USD</span>
                 <span>•</span>
                 <span>{% blocktranslate with amount=order.amount|som %}{{ amount }} so'm{% endblocktranslate %}</span>
                 <span>•</span>

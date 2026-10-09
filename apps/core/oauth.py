@@ -21,7 +21,8 @@ from django.contrib import messages
 from django.utils.translation import gettext as _
 from django.contrib.auth import get_user_model, login
 from django.db import IntegrityError, transaction
-from django.shortcuts import redirect, resolve_url
+from django.http import Http404
+from django.shortcuts import render, redirect, resolve_url
 from django.urls import reverse
 from django.utils.crypto import constant_time_compare
 from django.utils.text import slugify
@@ -60,8 +61,6 @@ def _unique_username(base):
     candidate = slugify(base).replace("-", "_")[:24] or "user"
     if not User.objects.filter(username__iexact=candidate).exists():
         return candidate
-    # Ketma-ket raqam emas, tasodifiy qo'shimcha: ketma-ketlik boshqa
-    # foydalanuvchilar nomini taxmin qilishga imkon berardi.
     for _ in range(10):
         suffix = secrets.token_hex(2)
         attempt = f"{candidate[:24]}_{suffix}"
@@ -73,7 +72,13 @@ def _unique_username(base):
 def google_login_view(request):
     """Foydalanuvchini Google'ning ruxsat so'rash sahifasiga yo'naltiradi."""
     if not getattr(settings, "GOOGLE_AUTH_ENABLED", False):
-        messages.error(request, _("Google orqali kirish hozircha sozlanmagan."))
+        if settings.DEBUG or getattr(settings, "DEMO_MODE", False):
+            # Development / Demo rejimida Google simulyatsiya oynasiga yo'naltiramiz
+            next_url = _safe_redirect_target(request, request.GET.get("next"))
+            request.session[SESSION_NEXT_KEY] = next_url
+            return redirect("core:google_dev_mock")
+
+        messages.error(request, _("Google orqali kirish hozircha sozlanmagan. .env faylida GOOGLE_OAUTH_CLIENT_ID va GOOGLE_OAUTH_CLIENT_SECRET ni kiriting."))
         return redirect("core:login")
 
     if request.user.is_authenticated:
@@ -292,3 +297,52 @@ def _fill_from_google(user, first_name, last_name, picture, email, extra=None):
         changed.append("email")
     if changed:
         user.save(update_fields=list(dict.fromkeys(changed)) + ["updated_at"])
+
+
+def google_dev_mock_view(request):
+    """
+    Ishlab chiqish (Development/Demo) rejimida Google OAuth oqimini
+    haqiqiy GCP kalitlarisiz sinab ko'rish imkonini beradi.
+    """
+    if not (settings.DEBUG or getattr(settings, "DEMO_MODE", False)):
+        raise Http404("Google simulyatsiyasi o'chirilgan.")
+
+    if request.user.is_authenticated:
+        return redirect("store:catalog")
+
+    next_url = request.session.get(SESSION_NEXT_KEY) or _safe_redirect_target(request, request.GET.get("next"))
+
+    if request.method == "POST":
+        email = request.POST.get("email", "").strip().lower()
+        full_name = request.POST.get("name", "").strip() or "Google Foydalanuvchi"
+        parts = full_name.split(" ", 1)
+        given_name = parts[0]
+        family_name = parts[1] if len(parts) > 1 else ""
+
+        if not email or "@" not in email:
+            messages.error(request, _("To'g'ri email manzil kiriting."))
+            return render(request, "core/google_dev_mock.html", {"next": next_url})
+
+        mock_sub = f"mock_google_{abs(hash(email)) % 100000000}"
+        info = {
+            "sub": mock_sub,
+            "email": email,
+            "email_verified": True,
+            "given_name": given_name,
+            "family_name": family_name,
+            "picture": "https://lh3.googleusercontent.com/a/default-user=s96-c",
+        }
+
+        user, created = _get_or_create_user(request, info, mock_sub, email)
+        login(request, user)
+        if created:
+            messages.success(request, _("Xush kelibsiz, %(name)s! Hisobingiz Google orqali yaratildi.") % {"name": user.display_name})
+        else:
+            messages.success(request, _("Xush kelibsiz, %(name)s!") % {"name": user.display_name})
+
+        return redirect(next_url)
+
+    return render(request, "core/google_dev_mock.html", {
+        "next": next_url,
+    })
+

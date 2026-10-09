@@ -14,11 +14,11 @@ from .forms import ProductForm, ReviewForm, ReportForm, TECH_CHOICES, SUBCAT_CHO
 from core.telegram import send_telegram_notification
 
 PRICE_RANGES = [
-    {"label": "$0 – $10", "min": 0, "max": 10},
-    {"label": "$10 – $50", "min": 10, "max": 50},
-    {"label": "$50 – $100", "min": 50, "max": 100},
-    {"label": "$100 – $200", "min": 100, "max": 200},
-    {"label": "$200 +", "min": 200, "max": 999999},
+    {"label": "0 – 10 USD", "min": 0, "max": 10},
+    {"label": "10 – 50 USD", "min": 10, "max": 50},
+    {"label": "50 – 100 USD", "min": 50, "max": 100},
+    {"label": "100 – 200 USD", "min": 100, "max": 200},
+    {"label": "200 + USD", "min": 200, "max": 999999},
 ]
 
 def catalog_view(request):
@@ -39,10 +39,10 @@ def catalog_view(request):
             Q(category__name__icontains=q)
         )
 
-    # Category filter
-    category_slug = request.GET.get("category", "").strip()
-    if category_slug:
-        products = products.filter(category__slug=category_slug)
+    # Category filter — support multiple selection
+    selected_cats = [c.strip() for c in request.GET.getlist("category") if c.strip()]
+    if selected_cats:
+        products = products.filter(category__slug__in=selected_cats)
 
     # Subcategory filter
     subcat = request.GET.get("subcat", "").strip()
@@ -50,13 +50,6 @@ def catalog_view(request):
         products = products.filter(subcategory=subcat)
 
     # Tech stack filter
-    #
-    # Avval `tech_stack__contains=tech` ishlatilgan edi — ikki muammo bilan:
-    #   1) JSONField'da `contains` SQLite/Oracle'da QO'LLAB-QUVVATLANMAYDI,
-    #      ya'ni istalgan texnologiya tanlansa sayt 500 xato berardi;
-    #   2) halqa ichidagi filter AND mantiqini berardi, izoh esa "any of"
-    #      (OR) deb yozilgan — ikkitasini tanlasa hech narsa chiqmasdi.
-    # icontains matn bo'yicha qidiradi va har ikkala bazada ishlaydi.
     selected_tech = request.GET.getlist("tech")
     if selected_tech:
         tech_q = Q()
@@ -91,7 +84,8 @@ def catalog_view(request):
     else:  # newest
         products = products.order_by("-created_at")
 
-    has_filters = bool(q or category_slug or subcat or selected_tech or price_min or price_max)
+    has_filters = bool(q or selected_cats or subcat or selected_tech or price_min or price_max)
+    active_filters_count = len(selected_cats) + len(selected_tech) + (1 if price_min or price_max else 0)
 
     # Highlights (shown when no filter is active, identical to Next.js)
     top_selling = Product.objects.filter(status=Product.Status.ACTIVE, is_deleted=False).select_related("category", "seller").order_by("-sales_count")[:10]
@@ -105,6 +99,7 @@ def catalog_view(request):
             "title": p.title,
             "slug": p.slug,
             "price": float(p.price),
+            "cover": p.cover_url,
             "cover_url": p.cover_url,
             "category": p.category.name,
             "tech": p.tech_stack,
@@ -117,9 +112,6 @@ def catalog_view(request):
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
 
-    # Sahifalash havolalari uchun joriy filtrlarni saqlab qolamiz.
-    # Ilgari shablon faqat q/category/subcat/sort ni qo'lda qo'shardi —
-    # `tech` va narx oralig'i 2-sahifaga o'tganda yo'qolib ketardi.
     page_params = request.GET.copy()
     page_params.pop("page", None)
     pagination_qs = page_params.urlencode()
@@ -132,7 +124,8 @@ def catalog_view(request):
     return render(request, "store/catalog.html", {
         "page_obj": page_obj,
         "categories": categories,
-        "category_slug": category_slug,
+        "selected_cats": selected_cats,
+        "category_slug": selected_cats[0] if len(selected_cats) == 1 else "",
         "subcat": subcat,
         "selected_tech": selected_tech,
         "tech_options": TECH_CHOICES,
@@ -143,10 +136,10 @@ def catalog_view(request):
         "sort": sort,
         "q": q,
         "has_filters": has_filters,
+        "active_filters_count": active_filters_count,
         "top_selling": top_selling,
         "new_arrivals": new_arrivals,
         "search_index": search_index,
-        # paginator allaqachon hisoblagan — alohida COUNT so'rovi shart emas
         "total_count": paginator.count,
         "pagination_qs": pagination_qs,
         "wishlist_ids": wishlist_ids,
@@ -242,8 +235,11 @@ def product_create_view(request):
 
 
 @login_required
-def product_edit_view(request, slug):
-    product = get_object_or_404(Product, slug=slug)
+def product_edit_view(request, slug=None, product_id=None):
+    if product_id:
+        product = get_object_or_404(Product, pk=product_id)
+    else:
+        product = get_object_or_404(Product, slug=slug)
     if product.seller != request.user and not request.user.is_staff:
         return HttpResponseForbidden("Siz faqat o'z mahsulotingizni tahrirlashingiz mumkin.")
 
@@ -335,8 +331,12 @@ def wishlist_toggle_view(request, product_id):
     return redirect("store:catalog")
 
 
-@login_required
 def wishlist_list_view(request):
+    if not request.user.is_authenticated:
+        return render(request, "store/wishlist.html", {
+            "products": [],
+            "wishlist_ids": set(),
+        })
     wishlist_items = Wishlist.objects.filter(user=request.user).select_related("product", "product__category", "product__seller")
     products = [w.product for w in wishlist_items]
     wishlist_ids = {str(p.id) for p in products}
@@ -350,17 +350,6 @@ def wishlist_list_view(request):
 @require_POST
 def add_review_view(request, slug):
     product = get_object_or_404(Product, slug=slug)
-    from orders.models import Order
-    has_purchased = Order.objects.filter(
-        buyer=request.user,
-        product=product,
-        status=Order.PayStatus.PAID
-    ).exists()
-
-    if not has_purchased and not request.user.is_staff:
-        messages.error(request, _("Faqat ushbu mahsulotni xarid qilgan foydalanuvchilar sharh qoldirishi mumkin."))
-        return redirect("store:product_detail", slug=slug)
-
     form = ReviewForm(request.POST)
     if form.is_valid():
         Review.objects.update_or_create(
@@ -373,6 +362,8 @@ def add_review_view(request, slug):
         )
         product.update_rating()
         messages.success(request, _("Sharhingiz qabul qilindi!"))
+    else:
+        messages.error(request, _("Iltimos, reyting va fikringizni to'liq kiriting."))
     return redirect("store:product_detail", slug=slug)
 
 

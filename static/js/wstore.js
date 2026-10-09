@@ -61,6 +61,19 @@
         el.textContent = formatPrice(usd, currency);
       }
     });
+
+    // Update price range filter labels dynamically
+    document.querySelectorAll(".price-range-label").forEach((el) => {
+      const min = parseFloat(el.getAttribute("data-min"));
+      const max = parseFloat(el.getAttribute("data-max"));
+      if (!isNaN(min) && !isNaN(max)) {
+        if (max >= 999999) {
+          el.textContent = `${formatPrice(min, currency)} +`;
+        } else {
+          el.textContent = `${formatPrice(min, currency)} – ${formatPrice(max, currency)}`;
+        }
+      }
+    });
   }
 
   window.setCurrency = function (curr) {

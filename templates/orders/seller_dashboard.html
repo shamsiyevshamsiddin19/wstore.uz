@@ -55,8 +55,8 @@
         <i data-lucide="trending-up" style="width: 22px; height: 22px;"></i>
       </div>
       <div>
-        <div class="stat-val">${{ revenue|som }}</div>
-        <div class="stat-lbl">{% translate "Jami tushum (USD)" %}</div>
+        <div class="stat-val"><span data-usd="{{ revenue }}">{{ revenue|som }} USD</span></div>
+        <div class="stat-lbl">{% translate "Jami tushum" %}</div>
       </div>
     </div>
 
@@ -96,7 +96,7 @@
                 {{ p.title }}
               </a>
               <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.82rem; color: var(--muted); flex-wrap: wrap;">
-                <span style="color: var(--accent); font-weight: 600;">${{ p.price|floatformat:0 }}</span>
+                <span style="color: var(--accent); font-weight: 600;" data-usd="{{ p.price }}">{{ p.price|floatformat:0 }} USD</span>
                 <span>•</span>
                 <span>{% blocktranslate with n=p.sales_count %}{{ n }} sotuv{% endblocktranslate %}</span>
                 <span>•</span>

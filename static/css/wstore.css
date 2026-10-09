@@ -109,10 +109,28 @@ input, select, textarea {
 .text-accent { color: rgb(var(--accent)); }
 .text-gold { color: rgb(var(--gold)); }
 .text-white { color: #ffffff; }
+.text-border-strong { color: rgb(var(--border-strong)); }
+
+.fill-gold { fill: rgb(var(--gold)); }
+.fill-none { fill: none; }
 
 .border-border { border-color: rgb(var(--border)); }
 .border-border-strong { border-color: rgb(var(--border-strong)); }
 .border-accent { border-color: rgb(var(--accent)); }
+
+.star-picker-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease;
+}
+.star-picker-btn:hover {
+  transform: scale(1.15);
+}
 
 /* --------------------------------------------------------------------------
    Layout Utilities
@@ -564,8 +582,21 @@ input, select, textarea {
   box-shadow: 0 2px 8px rgba(var(--accent), 0.35);
 }
 
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border-width: 0 !important;
+}
+
 .filter-radio-item,
 .filter-checkbox-item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.625rem;
@@ -577,18 +608,69 @@ input, select, textarea {
   color: rgb(var(--muted));
   cursor: pointer;
   transition: all 0.15s ease;
+  user-select: none;
 }
 .filter-radio-item:hover,
 .filter-checkbox-item:hover {
   background-color: rgb(var(--surface-2));
   color: rgb(var(--fg));
 }
-.filter-radio-item input[type="radio"],
-.filter-checkbox-item input[type="checkbox"] {
-  accent-color: rgb(var(--accent));
-  width: 15px;
-  height: 15px;
-  cursor: pointer;
+
+.custom-check-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 0.25rem;
+  border: 1px solid rgb(var(--border-strong));
+  background-color: transparent;
+  color: #ffffff;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.custom-check-box .check-icon {
+  display: none;
+}
+.filter-checkbox-item input:checked ~ .custom-check-box {
+  background-color: rgb(var(--accent));
+  border-color: rgb(var(--accent));
+  box-shadow: 0 0 0 2px rgba(var(--accent), 0.25);
+}
+.filter-checkbox-item input:checked ~ .custom-check-box .check-icon {
+  display: block;
+}
+
+.custom-radio-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  border: 1px solid rgb(var(--border-strong));
+  background-color: transparent;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.filter-radio-item input:checked ~ .custom-radio-box {
+  border-color: rgb(var(--accent));
+  box-shadow: 0 0 0 2px rgba(var(--accent), 0.25);
+}
+.custom-radio-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background-color: rgb(var(--accent));
+  display: none;
+}
+.filter-radio-item input:checked ~ .custom-radio-box .custom-radio-dot {
+  display: block;
+}
+
+.filter-radio-item input:checked ~ span:last-child,
+.filter-checkbox-item input:checked ~ span:last-child {
+  color: rgb(var(--fg));
 }
 
 .tech-tag-pill {

@@ -493,27 +493,28 @@ input, select, textarea {
   justify-content: center;
   border-radius: 9999px;
   background: rgba(var(--bg), 0.6);
-  border: 1px solid rgb(var(--border-strong));
+  /* Atrofdagi halqa (border) olib tashlandi — endi faqat xira qorong'i
+     fon (blur bilan) yurakchani ajratib turadi, rangli chegara yo'q. */
+  border: none;
   backdrop-filter: blur(8px);
   color: rgb(var(--fg));
   transition: all 0.2s ease;
 }
 .wishlist-btn:hover {
-  color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.4);
+  /* Qizil o'rniga saytning o'z (binafsha) rangi — bir oz yorqinroq nuance */
+  color: #8a7ef8;
 }
 .wishlist-btn.wishlisted,
 .wishlist-btn.active {
-  color: #ef4444 !important;
-  background: rgba(239, 68, 68, 0.15) !important;
-  border-color: rgba(239, 68, 68, 0.4) !important;
+  color: #8a7ef8 !important;
+  background: rgba(var(--accent), 0.18) !important;
 }
 .wishlist-btn.wishlisted i,
 .wishlist-btn.wishlisted svg,
 .wishlist-btn.active i,
 .wishlist-btn.active svg {
-  fill: #ef4444 !important;
-  color: #ef4444 !important;
+  fill: #8a7ef8 !important;
+  color: #8a7ef8 !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -1198,8 +1199,37 @@ a.stat-card:hover {
   color: inherit;
 }
 
+/* Texnologiya teglari — bitta qatorda. Nechta tegilganiga qarab
+   (3 ta, 4 ta, 10 ta — farqi yo'q) kartaga qancha sig'sa shuncha to'liq
+   ko'rinadi, keyingisi o'ngda xiralashib (fade) yo'qoladi. Ikkinchi
+   qatorga umuman bo'linmaydi, shuning uchun har bir kartaning balandligi
+   bir xil bo'lib qoladi. */
+.tech-tags-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.25rem;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, #000 85%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 85%, transparent 100%);
+}
+.tech-tags-row > span {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .product-price {
   letter-spacing: -0.01em;
+  /* Narx hech qachon o'z ichida ikkinchi qatorga bo'linib ketmasin —
+     bo'lmasa, o'ng tarafdagi yulduzcha reyting pastga surilib qolardi. */
+  white-space: nowrap;
+}
+/* Uzun valyuta qiymatlari uchun (masalan so'mda "1 260 000 so'm")
+   shrift biroz kichrayadi, shunda narx bitta qatorga sig'adi.
+   JS (applyCurrency) matn uzunligiga qarab shu klassni qo'shib/olib
+   tashlaydi — valyuta almashtirilganda avtomatik ishlaydi. */
+.product-price.is-long {
+  font-size: 0.8em;
+  letter-spacing: -0.015em;
 }
 
 .heart-icon {
@@ -1274,6 +1304,7 @@ a.stat-card:hover {
 .divide-border\/60 > :not([hidden]) ~ :not([hidden]) { border-color: rgba(var(--border), 0.6); }
 
 .placeholder\:text-muted\/70::placeholder { color: rgba(var(--muted), 0.7); }
+.placeholder\:text-muted\/60::placeholder { color: rgba(var(--muted), 0.6); }
 
 .first\:pt-0:first-child { padding-top: 0; }
 .last\:pb-0:last-child { padding-bottom: 0; }

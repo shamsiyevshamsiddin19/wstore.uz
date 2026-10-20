@@ -22,7 +22,7 @@ DEBUG = _env_flag("DEBUG", "True")
 # "*" ni standart qiymatdan olib tashladik — u Host header'ni qalbakilashtirishga
 # yo'l ochadi. Prod'da domenlar .env dagi ALLOWED_HOSTS orqali beriladi.
 ALLOWED_HOSTS = [h.strip() for h in os.getenv(
-    "ALLOWED_HOSTS", "localhost,127.0.0.1,wstore.uz,www.wstore.uz"
+    "ALLOWED_HOSTS", "localhost,127.0.0.1,testserver,wstore.uz,www.wstore.uz"
 ).split(",") if h.strip()]
 
 # DEMO_MODE — tezkor kirish (demo-login) va "simulyatsiya qilingan to'lov"ni
@@ -222,9 +222,7 @@ GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "").strip()
 # turganda yoki domen/sxema boshqacha bo'lsa — shu yerda aniq ko'rsating.
 GOOGLE_OAUTH_REDIRECT_URI = os.getenv("GOOGLE_OAUTH_REDIRECT_URI", "").strip()
 
-# Kalitlar berilmagan bo'lsa tugma umuman ko'rsatilmaydi — aks holda
-# foydalanuvchi bosib, Google'ning "invalid_client" xatosiga tushardi.
-GOOGLE_AUTH_ENABLED = bool(GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET)
+GOOGLE_AUTH_ENABLED = bool(GOOGLE_OAUTH_CLIENT_ID)
 
 # Saytga egalik qiluvchi Google hisoblari. Shu emaillar bilan kirgan
 # foydalanuvchi avtomatik admin (staff + superuser) bo'ladi.

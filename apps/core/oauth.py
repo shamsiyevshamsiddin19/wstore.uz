@@ -47,9 +47,12 @@ def _redirect_uri(request):
     Google konsolidagi "Authorized redirect URI" bilan BIR XIL bo'lishi shart —
     bitta belgi farq qilsa ham `redirect_uri_mismatch` xatosi chiqadi.
     """
-    configured = getattr(settings, "GOOGLE_OAUTH_REDIRECT_URI", "")
+    configured = getattr(settings, "GOOGLE_OAUTH_REDIRECT_URI", "").strip()
     if configured:
         return configured
+    host = request.get_host().split(":")[0].lower()
+    if host in ["wstore.uz", "www.wstore.uz"]:
+        return "https://wstore.uz/auth/google/callback"
     return request.build_absolute_uri(reverse("core:google_callback"))
 
 
@@ -71,16 +74,6 @@ def _unique_username(base):
 
 def google_login_view(request):
     """Foydalanuvchini Google'ning ruxsat so'rash sahifasiga yo'naltiradi."""
-    if not getattr(settings, "GOOGLE_AUTH_ENABLED", False):
-        if settings.DEBUG or getattr(settings, "DEMO_MODE", False):
-            # Development / Demo rejimida Google simulyatsiya oynasiga yo'naltiramiz
-            next_url = _safe_redirect_target(request, request.GET.get("next"))
-            request.session[SESSION_NEXT_KEY] = next_url
-            return redirect("core:google_dev_mock")
-
-        messages.error(request, _("Google orqali kirish hozircha sozlanmagan. .env faylida GOOGLE_OAUTH_CLIENT_ID va GOOGLE_OAUTH_CLIENT_SECRET ni kiriting."))
-        return redirect("core:login")
-
     if request.user.is_authenticated:
         return redirect("store:catalog")
 
@@ -90,15 +83,23 @@ def google_login_view(request):
     if ref:
         request.session["referral_code"] = ref
 
+    next_url = _safe_redirect_target(request, request.GET.get("next"))
+    request.session[SESSION_NEXT_KEY] = next_url
+
+    client_id = getattr(settings, "GOOGLE_OAUTH_CLIENT_ID", "").strip()
+    if not client_id:
+        if settings.DEBUG:
+            return redirect("core:google_dev_mock")
+        messages.error(request, _("Google orqali kirish sozlanmagan."))
+        return redirect("core:login")
+
     state = secrets.token_urlsafe(32)
     request.session[SESSION_STATE_KEY] = state
-    request.session[SESSION_NEXT_KEY] = _safe_redirect_target(
-        request, request.GET.get("next")
-    )
 
+    redirect_uri = _redirect_uri(request)
     params = {
-        "client_id": settings.GOOGLE_OAUTH_CLIENT_ID,
-        "redirect_uri": _redirect_uri(request),
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
         "response_type": "code",
         "scope": "openid email profile",
         "state": state,
@@ -111,12 +112,35 @@ def google_login_view(request):
 
 def google_callback_view(request):
     """Google qaytargan kodni tokenga almashtiradi va foydalanuvchini kiritadi."""
-    if not getattr(settings, "GOOGLE_AUTH_ENABLED", False):
-        messages.error(request, _("Google orqali kirish hozircha sozlanmagan."))
-        return redirect("core:login")
+    client_id = getattr(settings, "GOOGLE_OAUTH_CLIENT_ID", "").strip()
+    client_secret = getattr(settings, "GOOGLE_OAUTH_CLIENT_SECRET", "").strip()
 
     next_url = request.session.pop(SESSION_NEXT_KEY, None) or resolve_url("store:catalog")
     expected_state = request.session.pop(SESSION_STATE_KEY, None)
+
+    if request.GET.get("error"):
+        # Foydalanuvchi "Bekor qilish" bosgan holat ham shu yerga tushadi.
+        messages.info(request, _("Google orqali kirish bekor qilindi."))
+        return redirect("core:login")
+
+    state = request.GET.get("state", "")
+    if not expected_state or not constant_time_compare(expected_state, state):
+        # CSRF yoki eskirgan havola: boshqa saytdan yuborilgan callback
+        # bo'lishi mumkin, shuning uchun hech qanday hisobga kirmaymiz.
+        messages.error(request, _("Kirish so'rovi eskirgan. Qaytadan urinib ko'ring."))
+        return redirect("core:login")
+
+    code = request.GET.get("code")
+    if not code:
+        messages.error(request, _("Google'dan kod qaytmadi. Qaytadan urinib ko'ring."))
+        return redirect("core:login")
+
+    if not client_secret:
+        messages.error(
+            request,
+            _("Google Client Secret sozlanmagan. Iltimos, GOOGLE_OAUTH_CLIENT_SECRET ni kiriting.")
+        )
+        return redirect("core:login")
 
     if request.GET.get("error"):
         # Foydalanuvchi "Bekor qilish" bosgan holat ham shu yerga tushadi.
@@ -310,7 +334,16 @@ def google_dev_mock_view(request):
     if request.user.is_authenticated:
         return redirect("store:catalog")
 
-    next_url = request.session.get(SESSION_NEXT_KEY) or _safe_redirect_target(request, request.GET.get("next"))
+    import hashlib
+
+    ref = request.GET.get("ref")
+    if ref:
+        request.session["referral_code"] = ref
+
+    next_url = _safe_redirect_target(
+        request,
+        request.POST.get("next") or request.GET.get("next") or request.session.get(SESSION_NEXT_KEY)
+    )
 
     if request.method == "POST":
         email = request.POST.get("email", "").strip().lower()
@@ -323,7 +356,7 @@ def google_dev_mock_view(request):
             messages.error(request, _("To'g'ri email manzil kiriting."))
             return render(request, "core/google_dev_mock.html", {"next": next_url})
 
-        mock_sub = f"mock_google_{abs(hash(email)) % 100000000}"
+        mock_sub = f"mock_google_{hashlib.sha256(email.encode()).hexdigest()[:16]}"
         info = {
             "sub": mock_sub,
             "email": email,
@@ -333,8 +366,16 @@ def google_dev_mock_view(request):
             "picture": "https://lh3.googleusercontent.com/a/default-user=s96-c",
         }
 
-        user, created = _get_or_create_user(request, info, mock_sub, email)
+        try:
+            user, created = _get_or_create_user(request, info, mock_sub, email)
+        except Exception as exc:
+            log_error(exc, context="google_dev_mock:get_or_create_user")
+            messages.error(request, _("Google hisobi orqali kirishda xatolik yuz berdi."))
+            return render(request, "core/google_dev_mock.html", {"next": next_url})
+
         login(request, user)
+        request.session.pop(SESSION_NEXT_KEY, None)
+
         if created:
             messages.success(request, _("Xush kelibsiz, %(name)s! Hisobingiz Google orqali yaratildi.") % {"name": user.display_name})
         else:

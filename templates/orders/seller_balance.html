@@ -21,6 +21,22 @@
     </p>
   </div>
 
+  {% if not user.is_authenticated %}
+    <div class="card" style="box-shadow: 0 16px 40px rgba(0,0,0,0.3); text-align: center; padding: 3.5rem 1.5rem;">
+      <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(230, 180, 80, 0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; color: var(--gold);">
+        <i data-lucide="wallet" style="width: 28px; height: 28px;"></i>
+      </div>
+      <h2 style="font-size: 1.3rem; font-weight: 700; color: var(--fg); margin-bottom: 0.5rem;">{% translate "Balansni ko'rish uchun tizimga kiring" %}</h2>
+      <p style="font-size: 0.9rem; color: var(--muted); margin-bottom: 1.5rem; max-width: 440px; margin-left: auto; margin-right: auto;">
+        {% translate "Mablag'ni kartaga yechib olish va so'rovlar tarixini ko'rish uchun hisobingizga kiring." %}
+      </p>
+      <a href="{% url 'core:login' %}?next={{ request.path }}" class="btn btn-primary btn-lg" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+        <i data-lucide="log-in" style="width: 17px; height: 17px;"></i>
+        <span>{% translate "Tizimga kirish" %}</span>
+      </a>
+    </div>
+  {% else %}
+
   <!-- Big Balance Card -->
   <div class="card" style="margin-bottom: 2rem; background: linear-gradient(135deg, rgba(230, 180, 80, 0.12) 0%, rgba(21, 21, 28, 0.95) 100%); border-color: rgba(230, 180, 80, 0.35); padding: 1.75rem 2rem;">
     <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
@@ -164,5 +180,6 @@
     </div>
   {% endif %}
 
+  {% endif %}
 </div>
 {% endblock %}

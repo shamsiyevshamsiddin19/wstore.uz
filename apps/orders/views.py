@@ -12,6 +12,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
+from core.decorators import seller_required
 from core.logging_utils import log_error
 from store.models import Product
 from .models import Order, ClickTransaction, Withdrawal
@@ -130,7 +131,7 @@ def checkout_view(request, product_id):
     return redirect(click_url)
 
 
-@login_required
+@seller_required
 @require_POST
 def listing_pay_view(request, product_id):
     product = get_object_or_404(Product, id=product_id, seller=request.user)
@@ -292,20 +293,25 @@ def download_file_view(request, token):
     return FileResponse(mem_zip, as_attachment=True, filename=f"{product.slug}.zip")
 
 
-@login_required
 def dashboard_view(request):
     """
     Buyer cabinet: purchased products, status, referral link card.
     """
+    if not request.user.is_authenticated:
+        return render(request, "orders/dashboard.html", {
+            "orders": [],
+            "referrals_count": 0,
+            "bonus_earned": 0,
+            "referral_link": "",
+        })
+
     orders = Order.objects.filter(buyer=request.user).select_related("product").order_by("-created_at")
     referrals_count = request.user.referrals.count()
     paid_referrals_count = request.user.referrals.filter(referral_bonus_paid=True).count()
     bonus_earned = paid_referrals_count * getattr(settings, "REFERRAL_BONUS_SOM", 10000)
 
     # APP_URL .env da aniq berilgan bo'lsa o'shani ishlatamiz (prod domeni),
-    # aks holda so'rov manzilidan yasaymiz. Ilgari standart qiymat doim
-    # "http://localhost:8000" edi va boshqa portda ishlaganda havola noto'g'ri
-    # chiqardi — foydalanuvchi uni nusxalab tarqatsa, ochilmasdi.
+    # aks holda so'rov manzilidan yasaymiz.
     app_url = (getattr(settings, "APP_URL", "") or "").rstrip("/")
     if not app_url or "localhost:8000" in app_url:
         app_url = request.build_absolute_uri("/").rstrip("/")
@@ -319,11 +325,19 @@ def dashboard_view(request):
     })
 
 
-@login_required
+@seller_required
 def seller_dashboard_view(request):
     """
     Seller panel: products list, statistics, balance overview.
     """
+    if not request.user.is_authenticated:
+        return render(request, "orders/seller_dashboard.html", {
+            "products": [],
+            "total_sales": 0,
+            "revenue": 0,
+            "balance": 0,
+        })
+
     products = Product.objects.filter(seller=request.user, is_deleted=False).order_by("-created_at")
     total_sales = sum(p.sales_count for p in products)
     revenue = sum(float(p.price) * p.sales_count for p in products)
@@ -336,11 +350,18 @@ def seller_dashboard_view(request):
     })
 
 
-@login_required
+@seller_required
 def seller_balance_view(request):
     """
     Seller balance & withdrawal requests page.
     """
+    if not request.user.is_authenticated:
+        return render(request, "orders/seller_balance.html", {
+            "form": None,
+            "withdrawals": [],
+            "balance": 0,
+        })
+
     withdrawals = Withdrawal.objects.filter(seller=request.user).order_by("-created_at")
 
     if request.method == "POST":

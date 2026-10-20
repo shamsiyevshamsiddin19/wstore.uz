@@ -26,7 +26,22 @@
     {% endif %}
   </div>
 
-  {% if products %}
+  {% if not user.is_authenticated %}
+    <div class="rounded-card border border-border bg-surface p-8 text-center sm:p-12">
+      <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-red-400">
+        <i data-lucide="heart" style="width: 24px; height: 24px;"></i>
+      </div>
+      <p class="mb-4 text-sm text-muted">
+        {% translate "Sevimlilarni ko'rish uchun tizimga kiring." %}
+      </p>
+      <a
+        href="{% url 'core:login' %}?next={{ request.path }}"
+        class="inline-block rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-white transition hover:bg-accent-hover"
+      >
+        {% translate "Tizimga kirish" %}
+      </a>
+    </div>
+  {% elif products %}
     <div class="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
       {% for product in products %}
         {% include 'store/_product_card.html' with product=product wishlist_ids=wishlist_ids %}

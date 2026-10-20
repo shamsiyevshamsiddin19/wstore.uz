@@ -5,6 +5,7 @@ from django.conf.urls.static import static
 
 from store import views as store_views
 from core import views as core_views
+from core import oauth as core_oauth
 from orders import views as orders_views
 
 urlpatterns = [
@@ -12,6 +13,8 @@ urlpatterns = [
     # Django'ning set_language view'i — navbar'dagi til almashtirgich
     # shu manzilga POST yuboradi va tilni cookie'ga yozadi.
     path("i18n/", include("django.conf.urls.i18n")),
+    # Sotuvchi API'si (Bearer token bilan)
+    path("api/v1/", include("core.api_urls")),
     
     # Kanonik Next.js manzillar (1:1 moslik)
     path("dashboard/", orders_views.dashboard_view, name="canonical_dashboard"),
@@ -31,6 +34,12 @@ urlpatterns = [
     path("api/click/prepare/", orders_views.click_prepare_webhook),
     path("api/click/complete", orders_views.click_complete_webhook),
     path("api/click/complete/", orders_views.click_complete_webhook),
+    path("api/auth/signin/google", core_oauth.google_login_view),
+    path("api/auth/signin/google/", core_oauth.google_login_view),
+    path("api/auth/callback/google", core_oauth.google_callback_view),
+    path("api/auth/callback/google/", core_oauth.google_callback_view),
+    path("google/", core_oauth.google_login_view),
+    path("google-login/", core_oauth.google_login_view),
 
     path("", include("store.urls", namespace="store")),
     path("auth/", include("core.urls", namespace="core")),

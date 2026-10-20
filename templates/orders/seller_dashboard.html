@@ -16,17 +16,35 @@
         {% translate "Mahsulotlaringizni boshqaring, sotuvlar statistikasini kuzating va yangi loyihalar qo'shing." %}
       </p>
     </div>
-    <div style="display: flex; gap: 0.75rem;">
-      <a href="{% url 'orders:seller_balance' %}" class="btn btn-secondary btn-sm">
-        <i data-lucide="wallet" style="width: 15px; height: 15px; color: var(--gold);"></i>
-        <span>{% blocktranslate with amount=balance|som %}Balans: {{ amount }} so'm{% endblocktranslate %}</span>
-      </a>
-      <a href="{% url 'store:product_create' %}" class="btn btn-primary btn-sm">
-        <i data-lucide="plus-circle" style="width: 15px; height: 15px;"></i>
-        <span>{% translate "Yangi loyiha qo'shish" %}</span>
+    {% if user.is_authenticated %}
+      <div style="display: flex; gap: 0.75rem;">
+        <a href="{% url 'orders:seller_balance' %}" class="btn btn-secondary btn-sm">
+          <i data-lucide="wallet" style="width: 15px; height: 15px; color: var(--gold);"></i>
+          <span>{% blocktranslate with amount=balance|som %}Balans: {{ amount }} so'm{% endblocktranslate %}</span>
+        </a>
+        <a href="{% url 'store:product_create' %}" class="btn btn-primary btn-sm">
+          <i data-lucide="plus-circle" style="width: 15px; height: 15px;"></i>
+          <span>{% translate "Yangi loyiha qo'shish" %}</span>
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if not user.is_authenticated %}
+    <div class="card" style="box-shadow: 0 16px 40px rgba(0,0,0,0.3); text-align: center; padding: 3.5rem 1.5rem;">
+      <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(109, 94, 246, 0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; color: var(--accent);">
+        <i data-lucide="store" style="width: 28px; height: 28px;"></i>
+      </div>
+      <h2 style="font-size: 1.3rem; font-weight: 700; color: var(--fg); margin-bottom: 0.5rem;">{% translate "Sotuvchi panelini ko'rish uchun tizimga kiring" %}</h2>
+      <p style="font-size: 0.9rem; color: var(--muted); margin-bottom: 1.5rem; max-width: 440px; margin-left: auto; margin-right: auto;">
+        {% translate "Loyihalaringiz, sotuvlar statistikasi va balansingizni boshqarish uchun hisobingizga kiring." %}
+      </p>
+      <a href="{% url 'core:login' %}?next={{ request.path }}" class="btn btn-primary btn-lg" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+        <i data-lucide="log-in" style="width: 17px; height: 17px;"></i>
+        <span>{% translate "Tizimga kirish" %}</span>
       </a>
     </div>
-  </div>
+  {% else %}
 
   <!-- Stats Grid -->
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 2.5rem;">
@@ -193,5 +211,6 @@
     </div>
   {% endif %}
 
+  {% endif %}
 </div>
 {% endblock %}

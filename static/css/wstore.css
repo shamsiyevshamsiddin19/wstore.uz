@@ -507,7 +507,12 @@ input, select, textarea {
 .wishlist-btn.wishlisted,
 .wishlist-btn.active {
   color: #8a7ef8 !important;
-  background: rgba(var(--accent), 0.18) !important;
+  /* rgba(var(--accent), N) BU YERDA ISHLAMAYDI — --accent probel bilan
+     ajratilgan ("109 94 246"), vergulli eski rgba() sintaksisi esa
+     bunday qiymatni qabul qilmaydi va butun e'lon e'tiborsiz qoldiriladi
+     (fon shaffof bo'lib qolaveradi). Shu sabab "/" sintaksisi ishlatildi —
+     bu CSS Color 4 standarti, probelli o'zgaruvchi bilan to'g'ri ishlaydi. */
+  background: rgb(var(--accent) / 0.18) !important;
 }
 .wishlist-btn.wishlisted i,
 .wishlist-btn.wishlisted svg,

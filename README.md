@@ -6,7 +6,7 @@
 
 ## 🚀 Texnologiyalar to'plami
 
-- **Backend:** Python 3.12, Django 5.x
+- **Backend:** Python 3.12, Django 5.x 
 - **Ma'lumotlar bazasi:** SQLite (joriy server) yoki `DATABASE_URL` orqali PostgreSQL
 - **Frontend & Stil:** HTML5, Modern CSS3 (Dark Theme dizayn), Vanilla JavaScript
 - **To'lov integratsiyasi:** Click Merchant API & to'lov ko'prigi
